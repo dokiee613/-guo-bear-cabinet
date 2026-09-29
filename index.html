@@ -316,8 +316,30 @@ function renderProfile(){
  renderPhotoWall();renderComments();updateStorageInfo()
 }
 function renderPhotoWall(){
- let p=state.profile.photos||[];
- $("#photoWall").innerHTML=p.length?p.map(x=>`<article class="wall-photo"><img src="${x.image}" alt=""><div class="wall-overlay">${esc(x.caption||"")}</div></article>`).join(""):`<div class="wall-empty">还没有照片。这里会自动保持三列照片墙。</div>`;
+  let p=state.profile.photos||[];
+
+  $("#photoWall").innerHTML=p.length
+    ?p.map(x=>`
+      <article class="wall-photo" data-wall-id="${x.id}">
+        <img src="${x.image}" alt="">
+        <div class="wall-overlay">${esc(x.caption||"")}</div>
+      </article>
+    `).join("")
+    :`<div class="wall-empty">还没有照片。这里会自动保持三列照片墙。</div>`;
+
+  $("#photoWall").querySelectorAll("[data-wall-id]").forEach(el=>{
+    el.onclick=()=>{
+      let id=el.dataset.wallId;
+
+      if(!confirm("确定删除这张照片吗？"))return;
+
+      state.profile.photos=(state.profile.photos||[]).filter(x=>x.id!==id);
+
+      save();
+      renderPhotoWall();
+      toast("照片已删除");
+    };
+  });
 }
 function timeText(t){try{return new Date(t).toLocaleString("zh-CN",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"})}catch(e){return""}}
 function renderComments(){
