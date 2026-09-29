@@ -128,9 +128,66 @@ async function load(){
  state.diaries=state.diaries.map(d=>({...d,group:d.group||"日常"}));state.diaryGroups=[...new Set([...(state.diaryGroups||[]),"日常","收藏",...state.diaries.map(d=>d.group).filter(Boolean)])];
  state.profile.photos=Array.isArray(state.profile.photos)?state.profile.photos:[];
  state.profile.comments=Array.isArray(state.profile.comments)?state.profile.comments:[];
+await recompressAllImages();
 }
 
 async function compressImage(file,maxSide=1280,quality=.58){
+async function recompressAllImages(){
+  if(state.imageCompressionVersion===1){
+    toast("图片已经压缩过啦");
+    return;
+  }
+
+  toast("正在检查并重新压缩图片…");
+
+  let changed=0;
+  let savedBytes=0;
+
+  async function recompress(data,maxSide,quality){
+    if(!data || typeof data!=="string" || !data.startsWith("data:image/")) return data;
+
+    try{
+      const res=await fetch(data);
+      const blob=await res.blob();
+      const file=new File([blob],"image.jpg",{type:blob.type||"image/jpeg"});
+      const newData=await compressImage(file,maxSide,quality);
+
+      if(newData.length<data.length){
+        changed++;
+        savedBytes+=data.length-newData.length;
+        return newData;
+      }
+    }catch(e){}
+
+    return data;
+  }
+
+  for(const item of state.items){
+    if(item.image){
+      item.image=await recompress(item.image,800,.35);
+    }
+  }
+
+  if(state.profile.avatar){
+    state.profile.avatar=await recompress(state.profile.avatar,400,.35);
+  }
+
+  if(Array.isArray(state.profile.photos)){
+    for(const photo of state.profile.photos){
+      if(photo.image){
+        photo.image=await recompress(photo.image,800,.35);
+      }
+    }
+  }
+
+  state.imageCompressionVersion=1;
+  await dbPut(state);
+
+  toast(`完成：${changed} 张图片已压缩`);
+  console.log("重新压缩完成");
+  console.log("处理图片：",changed,"张");
+  console.log("预计减少：",formatBytes(savedBytes));
+}
  return new Promise((resolve,reject)=>{
   const reader=new FileReader();reader.onerror=reject;
   reader.onload=()=>{
@@ -190,7 +247,7 @@ function openForm(id=null){
  $("#group").value=x?.group||state.groups[0]||"其他";tempImage=x?.image||null;renderPreview();open("formModal")
 }
 function renderPreview(){$("#preview").innerHTML=tempImage?`<img src="${tempImage}" alt="">`:`<div class="noimg">＋</div>`}
-$("#imageInput").onchange=async e=>{let f=e.target.files[0];if(!f)return;try{tempImage=await compressImage(f,1280,.52);renderPreview();toast("图片已极限压缩") }catch(err){toast("图片处理失败")}}
+$("#imageInput").onchange=async e=>{let f=e.target.files[0];if(!f)return;try{tempImage=await compressImage(f,800,.35);renderPreview();toast("图片已极限压缩") }catch(err){toast("图片处理失败")}}
 $("#saveBtn").onclick=()=>{
  let name=$("#name").value.trim();if(!name){toast("请先写个名字呀");return}
  let old=editingId?state.items.find(x=>x.id===editingId):null;
@@ -215,7 +272,7 @@ function renderGroupManage(){
 }
 $("#addGroup").onclick=()=>{let g=$("#newGroup").value.trim();if(!g){toast("先输入分组名称");return}if(g===FAV_GROUP||state.groups.includes(g)){toast("这个分组已经存在");return}state.groups.push(g);$("#newGroup").value="";save();renderGroupManage();render();toast("分组已自动保存")}
 function openProfile(){tempAvatar=state.profile.avatar||"";$("#profileNameInput").value=state.profile.name||"";$("#profileBioInput").value=state.profile.bio||"";$("#profilePreview").innerHTML=tempAvatar?`<img src="${tempAvatar}" alt="">`:`<div class="noimg">♡</div>`;open("profileModal")}
-$("#avatarInput").onchange=async e=>{let f=e.target.files[0];if(!f)return;try{tempAvatar=await compressImage(f,720,.5);$("#profilePreview").innerHTML=`<img src="${tempAvatar}" alt="">`;toast("头像已压缩") }catch(err){toast("图片处理失败")}}
+$("#avatarInput").onchange=async e=>{let f=e.target.files[0];if(!f)return;try{tempAvatar=await compressImage(f,400,.35);$("#profilePreview").innerHTML=`<img src="${tempAvatar}" alt="">`;toast("头像已压缩") }catch(err){toast("图片处理失败")}}
 $("#saveProfile").onclick=()=>{state.profile={...state.profile,name:$("#profileNameInput").value.trim(),bio:$("#profileBioInput").value.trim(),avatar:tempAvatar||"",photos:Array.isArray(state.profile.photos)?state.profile.photos:[],comments:Array.isArray(state.profile.comments)?state.profile.comments:[]};save();close("profileModal");renderProfile();toast("个人资料已自动保存")}
 function today(){return new Date().toISOString().slice(0,10)}
 function openDiary(id=null){
@@ -290,7 +347,7 @@ $("#addDiaryGroup").onclick=()=>{renderDiaryGroupManage();open("diaryGroupModal"
 $("#createDiaryGroup").onclick=()=>{let g=$("#newDiaryGroup").value.trim();if(!g){toast("先输入分组名称");return}if(g==="收藏"||diaryGroups().includes(g)){toast("这个分组已经存在");return}state.diaryGroups.push(g);$("#newDiaryGroup").value="";save();renderDiaryGroupManage();renderDiaryGroups();toast("日记分组已创建")};
 $("#postComment").onclick=()=>{let text=$("#commentInput").value.trim();if(!text){toast("先写点内容");return}state.profile.comments=state.profile.comments||[];state.profile.comments.unshift({id:crypto.randomUUID(),text,likes:0,reposts:0,liked:false,replies:[],created:Date.now()});$("#commentInput").value="";save();renderComments();toast("已发布")};
 $("#addWallPhoto").onclick=()=>{tempWallImage=null;$("#wallCaption").value="";$("#wallPreview").innerHTML='<div class="noimg">＋</div>';open("wallPhotoModal")};
-$("#wallPhotoInput").onchange=async e=>{let f=e.target.files[0];if(!f)return;try{tempWallImage=await compressImage(f,1200,.5);$("#wallPreview").innerHTML=`<img src="${tempWallImage}" alt="">`;toast("照片已压缩") }catch(err){toast("图片处理失败")}};
+$("#wallPhotoInput").onchange=async e=>{let f=e.target.files[0];if(!f)return;try{tempWallImage=await compressImage(f,800,.35);$("#wallPreview").innerHTML=`<img src="${tempWallImage}" alt="">`;toast("照片已压缩") }catch(err){toast("图片处理失败")}};
 $("#saveWallPhoto").onclick=()=>{if(!tempWallImage){toast("先选择照片");return}state.profile.photos=state.profile.photos||[];state.profile.photos.unshift({id:crypto.randomUUID(),image:tempWallImage,caption:$("#wallCaption").value.trim(),created:Date.now()});save();close("wallPhotoModal");renderProfile();toast("照片已发布")};
 $("#search").oninput=renderList;
 $("#sortBtn").onclick=()=>{sortMode=sortMode==="latest"?"price":sortMode==="price"?"name":"latest";$("#sortBtn").textContent=sortMode==="latest"?"最新":sortMode==="price"?"价格":"名称";renderList()}
