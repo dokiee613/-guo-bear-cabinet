@@ -56,7 +56,12 @@ button,input,textarea,select{font:inherit}button{border:0;color:inherit;cursor:p
 
 <section id="profilePage" class="page">
 <header class="top"><div class="brand"><h1>个人资料</h1><p>属于你自己的小角落</p></div><button class="icon-btn" id="editProfile">✎</button></header>
-<div class="profile-card"><div class="avatar" id="profileAvatar">♡</div><div class="profile-name" id="profileName">未命名</div><div class="bio" id="profileBio">写一点关于自己的话吧</div><div class="profile-stats"><div class="stat"><b id="pItems">0</b><span>收藏</span></div><div class="stat"><b id="pValue">¥0</b><span>总价值</span></div><div class="stat"><b id="pDiary">0</b><span>日记</span></div></div></div>
+<div class="profile-card"><div class="avatar" id="profileAvatar">♡</div><div class="profile-name" id="profileName">未命名</div><div class="bio" id="profileBio">写一点关于自己的话吧</div><div class="profile-stats">
+  <div class="stat"><b id="pItems">0</b><span>收藏</span></div>
+  <div class="stat"><b id="pValue">¥0</b><span>总价值</span></div>
+  <div class="stat"><b id="pDiary">0</b><span>日记</span></div>
+  <div class="stat" id="ledgerStat" style="cursor:pointer"><b id="pLedger">0</b><span>账本</span></div>
+</div></div>
 <div class="section-title">数据</div><div class="setting" style="background:var(--glass);border:1px solid var(--line);display:block"><div style="display:flex;justify-content:space-between;gap:12px"><div><b>IndexedDB 持久化存储</b><small>应用数据全部保存在 IndexedDB；实际容量由手机浏览器配额决定</small></div><b id="storageUsage">读取中…</b></div><div class="idb-note" id="storageDetail">正在读取浏览器允许的持久化空间…</div></div><div class="setting" style="background:var(--glass);border:1px solid var(--line)"><div><b>备份与恢复</b><small>物品、图片、分组、资料、日记全部保存</small></div><button class="soft-btn" id="profileBackup">管理</button></div>
 <div class="section-title">照片墙</div><button class="diary-add" id="addWallPhoto">＋ 发布一张照片</button><div class="photo-wall" id="photoWall"></div>
 <div class="section-title">评论区</div><div class="comment-composer"><textarea id="commentInput" placeholder="说点什么…"></textarea><button class="primary" id="postComment">发布</button></div><div class="comment-feed" id="commentFeed"></div>
@@ -79,6 +84,139 @@ button,input,textarea,select{font:inherit}button{border:0;color:inherit;cursor:p
 <div class="modal-wrap" id="wallPhotoModal"><div class="modal"><div class="modal-head"><h2>添加照片</h2><button class="close" data-close="wallPhotoModal">×</button></div><div class="preview" id="wallPreview"><div class="noimg">＋</div></div><label class="upload">＋ 选择照片<input id="wallPhotoInput" type="file" accept="image/*" hidden></label><div class="field"><label>配文</label><textarea id="wallCaption" placeholder="写点这张照片的故事…"></textarea></div><div class="actions"><button class="secondary" data-close="wallPhotoModal">取消</button><button class="primary" id="saveWallPhoto">发布</button></div></div></div>
 
 <div class="modal-wrap" id="diaryModal"><div class="modal"><div class="modal-head"><h2 id="diaryTitle">写日记</h2><button class="close" data-close="diaryModal">×</button></div><div class="field"><label>日期（修改旧日记时保持原日期）</label><input id="diaryDate" type="date"></div><div class="field" style="margin-top:10px"><label>分组</label><select id="diaryGroup"></select></div><div class="field" style="margin-top:10px"><label>标题</label><input id="diaryName" placeholder="今天发生了什么"></div><div class="field" style="margin-top:10px"><label>内容</label><textarea id="diaryText" style="min-height:220px" placeholder="写下来吧…"></textarea></div><div class="actions"><button class="secondary" data-close="diaryModal">取消</button><button class="primary" id="saveDiary">保存日记</button></div></div></div>
+<div class="modal-wrap" id="ledgerModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>我的账本</h2>
+      <button class="close" data-close="ledgerModal">×</button>
+    </div>
+
+    <div class="ledger-summary">
+      <div>
+        <span id="ledgerMonthTitle">2026年9月</span>
+        <small id="ledgerCount" style="display:block;color:var(--muted);margin-top:4px">0 笔账目</small>
+      </div>
+      <b id="ledgerTotal">¥0</b>
+    </div>
+
+    <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+      <button class="secondary" id="ledgerPrevMonth">‹</button>
+      <select id="ledgerMonth" style="flex:1">
+        <option value="all">全部账目</option>
+      </select>
+      <button class="secondary" id="ledgerNextMonth">›</button>
+    </div>
+
+    <div class="actions" style="margin-top:12px">
+      <button class="primary" id="addLedger">＋记一笔</button>
+    </div>
+
+    <div id="ledgerList" style="margin-top:14px"></div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="ledgerFormModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="ledgerFormTitle">记一笔</h2>
+      <button class="close" data-close="ledgerFormModal">×</button>
+    </div>
+
+    <div class="field">
+      <label>日期</label>
+      <input id="ledgerDate" type="date">
+    </div>
+
+    <div class="field" style="margin-top:10px">
+      <label>金额</label>
+      <input id="ledgerAmount" type="number" step="0.01" min="0" placeholder="例如 39.9">
+    </div>
+
+    <div class="field" style="margin-top:10px">
+      <label>备注</label>
+      <input id="ledgerNote" placeholder="买了什么、发生了什么…">
+    </div>
+
+    <div class="field" style="margin-top:10px">
+      <label>图片</label>
+      <input id="ledgerImageFile" type="file" accept="image/*">
+      <div id="ledgerImagePreview" style="margin-top:8px"></div>
+    </div>
+
+    <div class="actions">
+      <button class="secondary" data-close="ledgerFormModal">取消</button>
+      <button class="danger" id="deleteLedger" style="display:none">删除</button>
+      <button class="primary" id="saveLedger">保存账目</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div><div class="modal-wrap" id="ledgerModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>我的账本</h2>
+      <button class="close" data-close="ledgerModal">×</button>
+    </div>
+
+    <div class="ledger-summary">
+      <div>
+        <span id="ledgerMonthTitle">2026年9月</span>
+        <small id="ledgerCount" style="display:block;color:var(--muted);margin-top:4px">0 笔账目</small>
+      </div>
+      <b id="ledgerTotal">¥0</b>
+    </div>
+
+    <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+      <button class="secondary" id="ledgerPrevMonth">‹</button>
+      <select id="ledgerMonth" style="flex:1">
+        <option value="all">全部账目</option>
+      </select>
+      <button class="secondary" id="ledgerNextMonth">›</button>
+    </div>
+
+    <div class="actions" style="margin-top:12px">
+      <button class="primary" id="addLedger">＋记一笔</button>
+    </div>
+
+    <div id="ledgerList" style="margin-top:14px"></div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="ledgerFormModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="ledgerFormTitle">记一笔</h2>
+      <button class="close" data-close="ledgerFormModal">×</button>
+    </div>
+
+    <div class="field">
+      <label>日期</label>
+      <input id="ledgerDate" type="date">
+    </div>
+
+    <div class="field" style="margin-top:10px">
+      <label>金额</label>
+      <input id="ledgerAmount" type="number" step="0.01" min="0" placeholder="例如 39.9">
+    </div>
+
+    <div class="field" style="margin-top:10px">
+      <label>备注</label>
+      <input id="ledgerNote" placeholder="买了什么、发生了什么…">
+    </div>
+
+    <div class="field" style="margin-top:10px">
+      <label>图片</label>
+      <input id="ledgerImageFile" type="file" accept="image/*">
+      <div id="ledgerImagePreview" style="margin-top:8px"></div>
+    </div>
+
+    <div class="actions">
+      <button class="secondary" data-close="ledgerFormModal">取消</button>
+      <button class="danger" id="deleteLedger" style="display:none">删除</button>
+      <button class="primary" id="saveLedger">保存账目</button>
+    </div>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 <script>
@@ -86,9 +224,10 @@ const KEY="my-cabinet-v4";
 const DB_NAME="my-cabinet-indexeddb", DB_VERSION=1, STORE="app";
 const FAV_GROUP="收藏";
 const DEFAULT_GROUPS=["娃娃","体子","衣服","鞋子","袜子","配饰","其他"];
-let state={items:[],groups:DEFAULT_GROUPS.slice(),diaries:[],diaryGroups:["日常","收藏"],profile:{name:"",bio:"",avatar:"",photos:[],comments:[]}};
+let state={items:[],groups:DEFAULT_GROUPS.slice(),diaries:[],diaryGroups:["日常","收藏"],ledger:[],profile:{name:"",bio:"",avatar:"",photos:[],comments:[]}};
 let currentGroup="全部",editingId=null,tempImage=null,sortMode="latest",selectMode=false,selected=new Set(),editingDiaryId=null,tempAvatar=null;
 let diarySelectMode=false,diarySelected=new Set(),tempWallImage=null;
+let editingLedgerId=null,tempLedgerImage=null;
 
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
@@ -122,11 +261,12 @@ async function load(){
    const legacy=localStorage.getItem("my-cabinet-v3");
    if(legacy){try{x=JSON.parse(legacy);await dbPut(x);localStorage.removeItem("my-cabinet-v3")}catch(e){}}
   }
-  if(x)state={items:Array.isArray(x.items)?x.items:[],groups:Array.isArray(x.groups)?x.groups:DEFAULT_GROUPS.slice(),diaries:Array.isArray(x.diaries)?x.diaries:[],diaryGroups:Array.isArray(x.diaryGroups)?x.diaryGroups:["日常","收藏"],profile:{name:"",bio:"",avatar:"",photos:[],comments:[],...(x.profile||{})}};
+  if(x)state={items:Array.isArray(x.items)?x.items:[],groups:Array.isArray(x.groups)?x.groups:DEFAULT_GROUPS.slice(),diaries:Array.isArray(x.diaries)?x.diaries:[],diaryGroups:Array.isArray(x.diaryGroups)?x.diaryGroups:["日常","收藏"],ledger:Array.isArray(x.ledger)?x.ledger:[],profile:{name:"",bio:"",avatar:"",photos:[],comments:[],...(x.profile||{})}};
  }catch(e){}
  state.groups=[...new Set(state.groups.filter(x=>x&&x!==FAV_GROUP))];
  state.diaries=state.diaries.map(d=>({...d,group:d.group||"日常"}));state.diaryGroups=[...new Set([...(state.diaryGroups||[]),"日常","收藏",...state.diaries.map(d=>d.group).filter(Boolean)])];
  state.profile.photos=Array.isArray(state.profile.photos)?state.profile.photos:[];
+state.ledger=Array.isArray(state.ledger)?state.ledger:[];
  state.profile.comments=Array.isArray(state.profile.comments)?state.profile.comments:[];
 
 }
@@ -334,7 +474,102 @@ async function updateStorageInfo(){try{let e=await navigator.storage?.estimate?.
 function renderProfile(){
  let p=state.profile;$("#profileName").textContent=p.name||"未命名";$("#profileBio").textContent=p.bio||"写一点关于自己的话吧";$("#profileAvatar").innerHTML=p.avatar?`<img src="${p.avatar}" alt="">`:"♡";
  $("#pItems").textContent=state.items.length;$("#pValue").textContent="¥"+money(state.items.reduce((a,b)=>a+(Number(b.price)||0),0));$("#pDiary").textContent=state.diaries.length;
+$("#pLedger").textContent=state.ledger.length;
  renderPhotoWall();renderComments();updateStorageInfo()
+}
+
+function renderLedger(){
+  let list=$("#ledgerList");
+  let data=Array.isArray(state.ledger)?state.ledger:[];
+
+  if(!data.length){
+    $("#ledgerTotal").textContent="¥0";
+    $("#ledgerCount").textContent="0 笔账目";
+    $("#ledgerMonthTitle").textContent="全部账目";
+    list.innerHTML=`<div class="wall-empty">还没有账目，记下第一笔吧</div>`;
+    return;
+  }
+
+  let month=$("#ledgerMonth").value||"all";
+
+  let filtered=month==="all"
+    ?[...data]
+    :data.filter(x=>String(x.date||"").slice(0,7)===month);
+
+  filtered.sort((a,b)=>
+    String(b.date||"").localeCompare(String(a.date||""))
+  );
+
+  let total=filtered.reduce(
+    (sum,x)=>sum+(Number(x.amount)||0),
+    0
+  );
+
+  $("#ledgerTotal").textContent="¥"+money(total);
+  $("#ledgerCount").textContent=filtered.length+" 笔账目";
+
+  if(month==="all"){
+    $("#ledgerMonthTitle").textContent="全部账目";
+  }else{
+    let [y,m]=month.split("-");
+    $("#ledgerMonthTitle").textContent=Number(y)+"年"+Number(m)+"月";
+  }
+
+  if(!filtered.length){
+    list.innerHTML=`<div class="wall-empty">这个月还没有账目</div>`;
+    return;
+  }
+
+list.innerHTML=filtered.map(x=>`
+  <article class="ledger-item" data-ledger-id="${x.id}" style="cursor:pointer;padding:16px 18px;margin-bottom:12px;border-radius:16px;display:flex;align-items:flex-start;gap:14px">
+    <div class="ledger-main" style="flex:1;min-width:0">
+      <div class="ledger-date" style="font-size:13px;margin-bottom:7px">
+        ${esc(x.date||"未设置日期")}
+      </div>
+
+      <div class="ledger-note" style="font-size:15px;line-height:1.6">
+        ${esc(x.note||"无备注")}
+      </div>
+
+      ${x.image?`
+        <img
+          src="${x.image}"
+          alt=""
+          style="width:72px;height:72px;object-fit:cover;border-radius:12px;margin-top:10px;display:block"
+        >
+      `:""}
+    </div>
+
+    <b class="ledger-amount" style="font-size:16px;white-space:nowrap;padding-top:2px">
+      ¥${money(Number(x.amount)||0)}
+    </b>
+  </article>
+`).join("");
+
+  $("#ledgerList").querySelectorAll("[data-ledger-id]").forEach(el=>{
+    el.onclick=()=>{
+      let id=el.dataset.ledgerId;
+      let x=state.ledger.find(x=>x.id===id);
+      if(!x)return;
+
+      editingLedgerId=x.id;
+      tempLedgerImage=x.image||"";
+
+      $("#deleteLedger").style.display="block";
+
+      $("#ledgerFormTitle").textContent="修改账目";
+      $("#ledgerDate").value=x.date||today();
+      $("#ledgerAmount").value=x.amount??"";
+      $("#ledgerNote").value=x.note||"";
+      $("#ledgerImageFile").value="";
+
+      $("#ledgerImagePreview").innerHTML=x.image
+        ?`<img src="${x.image}" alt="" style="width:100%;max-height:180px;object-fit:cover;border-radius:12px">`
+        :`<div style="color:var(--muted);font-size:13px">没有图片</div>`;
+
+      open("ledgerFormModal");
+    };
+  });
 }
 function renderPhotoWall(){
   let p=state.profile.photos||[];
@@ -391,12 +626,101 @@ $("#createDiaryGroup").onclick=()=>{let g=$("#newDiaryGroup").value.trim();if(!g
 $("#postComment").onclick=()=>{let text=$("#commentInput").value.trim();if(!text){toast("先写点内容");return}state.profile.comments=state.profile.comments||[];state.profile.comments.unshift({id:crypto.randomUUID(),text,likes:0,reposts:0,liked:false,replies:[],created:Date.now()});$("#commentInput").value="";save();renderComments();toast("已发布")};
 $("#addWallPhoto").onclick=()=>{tempWallImage=null;$("#wallCaption").value="";$("#wallPreview").innerHTML='<div class="noimg">＋</div>';open("wallPhotoModal")};
 $("#wallPhotoInput").onchange=async e=>{let f=e.target.files[0];if(!f)return;try{tempWallImage=await compressImage(f,800,.35);$("#wallPreview").innerHTML=`<img src="${tempWallImage}" alt="">`;toast("照片已压缩") }catch(err){toast("图片处理失败")}};
+$("#ledgerImageFile").onchange=async e=>{
+  let f=e.target.files[0];
+  if(!f)return;
+
+  try{
+    tempLedgerImage=await compressImage(f,800,.35);
+    $("#ledgerImagePreview").innerHTML=`<img src="${tempLedgerImage}" alt="" style="width:100%;max-height:180px;object-fit:cover;border-radius:12px">`;
+    toast("账本图片已压缩");
+  }catch(err){
+    toast("图片处理失败");
+  }
+};
 $("#saveWallPhoto").onclick=()=>{if(!tempWallImage){toast("先选择照片");return}state.profile.photos=state.profile.photos||[];state.profile.photos.unshift({id:crypto.randomUUID(),image:tempWallImage,caption:$("#wallCaption").value.trim(),created:Date.now()});save();close("wallPhotoModal");renderProfile();toast("照片已发布")};
+$("#saveLedger").onclick=()=>{
+  let amount=Number($("#ledgerAmount").value);
+  let date=$("#ledgerDate").value;
+  let note=$("#ledgerNote").value.trim();
+
+  if(!date){
+    toast("请选择日期");
+    return;
+  }
+
+  if(!Number.isFinite(amount)||amount<0){
+    toast("请输入正确的金额");
+    return;
+  }
+
+  state.ledger=Array.isArray(state.ledger)?state.ledger:[];
+
+  let old=editingLedgerId
+    ?state.ledger.find(x=>x.id===editingLedgerId)
+    :null;
+
+  let item={
+    id:editingLedgerId||crypto.randomUUID(),
+    amount,
+    date,
+    note,
+    image:tempLedgerImage||old?.image||"",
+    created:old?.created||Date.now(),
+    updated:Date.now()
+  };
+
+  if(editingLedgerId){
+    let i=state.ledger.findIndex(x=>x.id===editingLedgerId);
+    if(i!==-1)state.ledger[i]=item;
+  }else{
+    state.ledger.unshift(item);
+  }
+
+save();
+close("ledgerFormModal");
+
+initLedgerMonths();
+renderLedger();
+renderProfile();
+
+editingLedgerId=null;
+tempLedgerImage=null;
+
+toast("账目已保存");
+};
+$("#deleteLedger").onclick=()=>{
+  if(!editingLedgerId)return;
+
+  let x=state.ledger.find(x=>x.id===editingLedgerId);
+  if(!x)return;
+
+  if(!confirm(
+    `确定删除这笔账目吗？\n\n${x.date||""}  ¥${money(Number(x.amount)||0)}`
+  ))return;
+
+  state.ledger=state.ledger.filter(
+    x=>x.id!==editingLedgerId
+  );
+
+  save();
+
+  editingLedgerId=null;
+  tempLedgerImage=null;
+
+  close("ledgerFormModal");
+
+  initLedgerMonths();
+  renderLedger();
+  renderProfile();
+
+  toast("账目已删除");
+};
 $("#search").oninput=renderList;
 $("#sortBtn").onclick=()=>{sortMode=sortMode==="latest"?"price":sortMode==="price"?"name":"latest";$("#sortBtn").textContent=sortMode==="latest"?"最新":sortMode==="price"?"价格":"名称";renderList()}
 $("#addBtn").onclick=()=>openForm();$("#quickAdd").onclick=()=>openForm();$("#menuBtn").onclick=()=>open("settingsModal");$("#manageGroups").onclick=manageGroups;
 $("#exportBtn").onclick=exportData;$("#importBtn").onclick=()=>$("#importFile").click();
-$("#clearBtn").onclick=()=>{if(confirm("确定清空全部数据吗？建议先导出备份")){state={items:[],groups:DEFAULT_GROUPS.slice(),diaries:[],diaryGroups:["日常","收藏"],profile:{name:"",bio:"",avatar:"",photos:[],comments:[]}};save();currentGroup="全部";close("settingsModal");render();toast("全部数据已清空并保存")}}
+$("#clearBtn").onclick=()=>{if(confirm("确定清空全部数据吗？建议先导出备份")){state={items:[],groups:DEFAULT_GROUPS.slice(),diaries:[],diaryGroups:["日常","收藏"],ledger:[],profile:{name:"",bio:"",avatar:"",photos:[],comments:[]}};save();currentGroup="全部";close("settingsModal");render();toast("全部数据已清空并保存")}}
 async function recompressAllImages(){
   if(!confirm("要重新压缩已经上传的所有图片吗？\n\n物品图片：800px / 0.35\n头像：400px / 0.35\n照片墙：800px / 0.35\n\n不会删除图片，只会在压缩后更小时替换"))return;
 
@@ -451,7 +775,7 @@ setTimeout(()=>{
 },1500);
 }
 async function exportData(){let data={app:"我的柜子",version:3,exportedAt:new Date().toISOString(),...state};let blob=new Blob([JSON.stringify(data)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="我的柜子完整备份_"+today()+".json";a.click();setTimeout(()=>URL.revokeObjectURL(url),500);toast("完整备份已导出")}
-$("#importFile").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!Array.isArray(d.items)||!Array.isArray(d.groups))throw Error();if(!confirm("导入会覆盖当前全部数据，确定吗？"))return;state={items:d.items,groups:d.groups.filter(x=>x!==FAV_GROUP),diaries:Array.isArray(d.diaries)?d.diaries:[],diaryGroups:Array.isArray(d.diaryGroups)?d.diaryGroups:["日常","收藏"],profile:{name:"",bio:"",avatar:"",photos:[],comments:[],...(d.profile||{})}};state.diaries=state.diaries.map(x=>({...x,group:x.group||"日常"}));state.diaryGroups=[...new Set([...(state.diaryGroups||[]),"日常","收藏",...state.diaries.map(x=>x.group)])];save();render();toast("完整备份已恢复并保存")}catch(err){toast("备份文件格式不正确")}e.target.value=""};r.readAsText(f)}
+$("#importFile").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!Array.isArray(d.items)||!Array.isArray(d.groups))throw Error();if(!confirm("导入会覆盖当前全部数据，确定吗？"))return;state={items:d.items,groups:d.groups.filter(x=>x!==FAV_GROUP),diaries:Array.isArray(d.diaries)?d.diaries:[],diaryGroups:Array.isArray(d.diaryGroups)?d.diaryGroups:["日常","收藏"],ledger:Array.isArray(d.ledger)?d.ledger:[],profile:{name:"",bio:"",avatar:"",photos:[],comments:[],...(d.profile||{})}};state.diaries=state.diaries.map(x=>({...x,group:x.group||"日常"}));state.diaryGroups=[...new Set([...(state.diaryGroups||[]),"日常","收藏",...state.diaries.map(x=>x.group)])];save();render();toast("完整备份已恢复并保存")}catch(err){toast("备份文件格式不正确")}e.target.value=""};r.readAsText(f)}
 const compressOldImagesBtn=document.createElement("button");
 compressOldImagesBtn.textContent="🗜️ 压缩已有图片";
 compressOldImagesBtn.className="secondary";
@@ -460,6 +784,98 @@ compressOldImagesBtn.onclick=recompressAllImages;
 document.querySelector("#settingsModal .settings-list")?.appendChild(compressOldImagesBtn);
 $("#editProfile").onclick=openProfile;$("#profileBackup").onclick=()=>open("settingsModal");$("#addDiary").onclick=()=>openDiary();$("#quickDiary").onclick=()=>openDiary();
 document.querySelectorAll(".nav-item").forEach(b=>b.onclick=()=>switchPage(b.dataset.page));
+$("#ledgerStat").onclick=()=>{
+  initLedgerMonths();
+  renderLedger();
+  open("ledgerModal");
+};
+function initLedgerMonths(){
+  let select=$("#ledgerMonth");
+  let data=Array.isArray(state.ledger)?state.ledger:[];
+
+  let months=[...new Set(
+    data
+      .map(x=>String(x.date||"").slice(0,7))
+      .filter(Boolean)
+  )].sort().reverse();
+
+  let current=select.value;
+
+  select.innerHTML=
+    `<option value="all">全部账目</option>`+
+    months.map(m=>{
+      let [y,mo]=m.split("-");
+      return `<option value="${m}">${y}年${Number(mo)}月</option>`;
+    }).join("");
+
+  if(current&&[...select.options].some(o=>o.value===current)){
+    select.value=current;
+  }else{
+    let now=today().slice(0,7);
+
+    if(months.includes(now)){
+      select.value=now;
+    }else if(months.length){
+      select.value=months[0];
+    }else{
+      select.value="all";
+    }
+  }
+}
+$("#ledgerMonth").onchange=()=>{
+  renderLedger();
+};
+
+$("#ledgerPrevMonth").onclick=()=>{
+  changeLedgerMonth(-1);
+};
+
+$("#ledgerNextMonth").onclick=()=>{
+  changeLedgerMonth(1);
+};
+
+function changeLedgerMonth(step){
+  let select=$("#ledgerMonth");
+  let current=select.value;
+
+  if(current==="all"){
+    initLedgerMonths();
+    current=select.value;
+  }
+
+  if(!current||current==="all")return;
+
+  let d=new Date(current+"-01T00:00:00");
+  d.setMonth(d.getMonth()+step);
+
+  let target=
+    d.getFullYear()+"-"+
+    String(d.getMonth()+1).padStart(2,"0");
+
+  let exists=[...select.options].some(o=>o.value===target);
+
+  if(exists){
+    select.value=target;
+  }else{
+    select.value="all";
+  }
+
+  renderLedger();
+}
+$("#addLedger").onclick=()=>{
+  editingLedgerId=null;
+  tempLedgerImage=null;
+
+  $("#ledgerFormTitle").textContent="记一笔";
+  $("#deleteLedger").style.display="none";
+  $("#ledgerDate").value=today();
+  $("#ledgerAmount").value="";
+  $("#ledgerNote").value="";
+  $("#ledgerImageFile").value="";
+  $("#ledgerImagePreview").innerHTML="";
+
+  open("ledgerFormModal");
+};
 document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>close(b.dataset.close));
 document.querySelectorAll(".modal-wrap").forEach(w=>w.addEventListener("click",e=>{if(e.target===w)w.classList.remove("show")}));
 window.addEventListener("pagehide",()=>save());window.addEventListener("beforeunload",()=>save());document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")save()});
