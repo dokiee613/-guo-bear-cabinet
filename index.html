@@ -354,8 +354,67 @@ $("#sortBtn").onclick=()=>{sortMode=sortMode==="latest"?"price":sortMode==="pric
 $("#addBtn").onclick=()=>openForm();$("#quickAdd").onclick=()=>openForm();$("#menuBtn").onclick=()=>open("settingsModal");$("#manageGroups").onclick=manageGroups;
 $("#exportBtn").onclick=exportData;$("#importBtn").onclick=()=>$("#importFile").click();
 $("#clearBtn").onclick=()=>{if(confirm("确定清空全部数据吗？建议先导出备份")){state={items:[],groups:DEFAULT_GROUPS.slice(),diaries:[],diaryGroups:["日常","收藏"],profile:{name:"",bio:"",avatar:"",photos:[],comments:[]}};save();currentGroup="全部";close("settingsModal");render();toast("全部数据已清空并保存")}}
+async function recompressAllImages(){
+  if(!confirm("要重新压缩已经上传的所有图片吗？\n\n物品图片：800px / 0.35\n头像：400px / 0.35\n照片墙：800px / 0.35\n\n不会删除图片，只会在压缩后更小时替换"))return;
+
+  toast("正在压缩图片，请稍等…");
+
+  let total=0,changed=0,savedBytes=0;
+
+  async function compressOld(data,maxSide,quality){
+    if(!data||typeof data!=="string"||!data.startsWith("data:image/"))return data;
+    total++;
+
+    try{
+      const res=await fetch(data);
+      const blob=await res.blob();
+      const file=new File([blob],"old.jpg",{type:"image/jpeg"});
+      const newer=await compressImage(file,maxSide,quality);
+
+      if(newer.length<data.length){
+        changed++;
+        savedBytes+=data.length-newer.length;
+        return newer;
+      }
+    }catch(e){}
+
+    return data;
+  }
+
+  for(const item of state.items){
+    if(item.image){
+      item.image=await compressOld(item.image,800,.35);
+    }
+  }
+
+  if(state.profile.avatar){
+    state.profile.avatar=await compressOld(state.profile.avatar,400,.35);
+  }
+
+  if(Array.isArray(state.profile.photos)){
+    for(const photo of state.profile.photos){
+      if(photo.image){
+        photo.image=await compressOld(photo.image,800,.35);
+      }
+    }
+  }
+
+await dbPut(state);
+
+toast(`压缩完成：${changed}/${total} 张图片已处理，即将刷新…`);
+
+setTimeout(()=>{
+  location.reload();
+},1500);
+}
 async function exportData(){let data={app:"我的柜子",version:3,exportedAt:new Date().toISOString(),...state};let blob=new Blob([JSON.stringify(data)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="我的柜子完整备份_"+today()+".json";a.click();setTimeout(()=>URL.revokeObjectURL(url),500);toast("完整备份已导出")}
 $("#importFile").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!Array.isArray(d.items)||!Array.isArray(d.groups))throw Error();if(!confirm("导入会覆盖当前全部数据，确定吗？"))return;state={items:d.items,groups:d.groups.filter(x=>x!==FAV_GROUP),diaries:Array.isArray(d.diaries)?d.diaries:[],diaryGroups:Array.isArray(d.diaryGroups)?d.diaryGroups:["日常","收藏"],profile:{name:"",bio:"",avatar:"",photos:[],comments:[],...(d.profile||{})}};state.diaries=state.diaries.map(x=>({...x,group:x.group||"日常"}));state.diaryGroups=[...new Set([...(state.diaryGroups||[]),"日常","收藏",...state.diaries.map(x=>x.group)])];save();render();toast("完整备份已恢复并保存")}catch(err){toast("备份文件格式不正确")}e.target.value=""};r.readAsText(f)}
+const compressOldImagesBtn=document.createElement("button");
+compressOldImagesBtn.textContent="🗜️ 压缩已有图片";
+compressOldImagesBtn.className="secondary";
+compressOldImagesBtn.style.cssText="width:100%;margin-top:10px;";
+compressOldImagesBtn.onclick=recompressAllImages;
+document.querySelector("#settingsModal .settings-list")?.appendChild(compressOldImagesBtn);
 $("#editProfile").onclick=openProfile;$("#profileBackup").onclick=()=>open("settingsModal");$("#addDiary").onclick=()=>openDiary();$("#quickDiary").onclick=()=>openDiary();
 document.querySelectorAll(".nav-item").forEach(b=>b.onclick=()=>switchPage(b.dataset.page));
 document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>close(b.dataset.close));
