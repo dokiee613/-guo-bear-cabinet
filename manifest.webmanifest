@@ -1,22 +1,22 @@
 {
-  "id": "./",
+  "id": "/-guo-bear-cabinet/",
   "name": "Internal Beyond",
   "short_name": "IB",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "/-guo-bear-cabinet/",
+  "scope": "/-guo-bear-cabinet/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#eef3fb",
   "theme_color": "#dfe9f6",
   "icons": [
     {
-      "src": "./icon-192.png",
+      "src": "/-guo-bear-cabinet/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./icon-512.png",
+      "src": "/-guo-bear-cabinet/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
