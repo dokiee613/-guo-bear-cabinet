@@ -205,14 +205,35 @@ function close(id){$("#"+id).classList.remove("show")}
 function toast(t){let e=$("#toast");e.textContent=t;e.classList.add("show");clearTimeout(window.__toast);window.__toast=setTimeout(()=>e.classList.remove("show"),1700)}
 function isFav(x){return !!x.fav}
 function render(){
- let total=state.items.reduce((a,b)=>a+(Number(b.price)||0),0);
- $("#total").textContent=money(total);$("#count").textContent=state.items.length;$("#groupCount").textContent=state.groups.length+1;$("#favCount").textContent=state.items.filter(isFav).length;
- renderGroups();renderList();renderDiary();renderProfile();
+  let visibleItems=state.items.filter(x=>{
+    if(currentGroup==="全部")return true;
+    if(currentGroup===FAV_GROUP)return isFav(x);
+    return x.group===currentGroup;
+  });
+
+  let total=visibleItems.reduce((a,b)=>a+(Number(b.price)||0),0);
+
+  $("#total").textContent=money(total);
+  $("#count").textContent=visibleItems.length;
+  $("#groupCount").textContent=state.groups.length+1;
+  $("#favCount").textContent=state.items.filter(isFav).length;
+
+  renderGroups();
+  renderList();
+  renderDiary();
+  renderProfile();
 }
 function renderGroups(){
  let html=`<button class="group ${currentGroup==="全部"?"active":""}" data-group="全部">全部 · ${state.items.length}</button><button class="group ${currentGroup===FAV_GROUP?"active":""}" data-group="${FAV_GROUP}">♥ 收藏 · ${state.items.filter(isFav).length}</button>`;
  state.groups.forEach(g=>{let n=state.items.filter(x=>x.group===g).length;html+=`<button class="group ${currentGroup===g?"active":""}" data-group="${esc(g)}">${esc(g)} · ${n}</button>`});
- $("#groups").innerHTML=html;$("#groups").querySelectorAll(".group").forEach(b=>b.onclick=()=>{currentGroup=b.dataset.group;selected.clear();updateBulk();renderGroups();renderList()});
+$("#groups").innerHTML=html;
+
+$("#groups").querySelectorAll(".group").forEach(b=>b.onclick=()=>{
+  currentGroup=b.dataset.group;
+  selected.clear();
+  updateBulk();
+  render();
+});
 }
 function filtered(){
  let q=$("#search").value.trim().toLowerCase();
