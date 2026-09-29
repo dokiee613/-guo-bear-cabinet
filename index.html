@@ -128,7 +128,7 @@ async function load(){
  state.diaries=state.diaries.map(d=>({...d,group:d.group||"日常"}));state.diaryGroups=[...new Set([...(state.diaryGroups||[]),"日常","收藏",...state.diaries.map(d=>d.group).filter(Boolean)])];
  state.profile.photos=Array.isArray(state.profile.photos)?state.profile.photos:[];
  state.profile.comments=Array.isArray(state.profile.comments)?state.profile.comments:[];
-await recompressAllImages();
+
 }
 
 async function compressImage(file,maxSide=1280,quality=.58){
